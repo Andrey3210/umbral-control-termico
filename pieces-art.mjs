@@ -61,7 +61,17 @@ const shield=()=>[
  tri(p(30,60),p(50,81),p(50,48),4),tri(p(68,60),p(50,81),p(50,48),5),
  ...q(p(34,49),p(39,43),p(48,52),p(44,58),0),
  ...q(p(44,58),p(48,52),p(64,37),p(68,43),0)];
-const range=()=>[...arrow(22,27,49,0),...arrow(29,57,49,3),...rect(31,47,39,3,5),...rect(30,23,3,57,2),...rect(70,23,3,57,1)];
+const range=()=>[
+ ...rect(19,46,17,9,3),...rect(36,46,27,9,0),...rect(63,46,18,9,2),
+ ...rect(35,38,2,24,4),...rect(63,38,2,24,4),
+ tri(p(16,50),p(21,43),p(21,57),3),tri(p(84,50),p(79,43),p(79,57),2)
+];
+const warning=()=>[tri(p(71,24),p(87,57),p(55,57),0),
+ tri(p(71,24),p(87,57),p(71,57),1),...rect(70,36,2,10,4),...rect(70,49,2,3,4)];
+const clipboard=()=>[...rect(28,23,43,57,4),...rect(31,26,37,51,0),...rect(42,19,16,10,3),
+ ...[0,1,2].flatMap(i=>{const y=36+i*11;return [
+ ...rect(46,y+2,16,2,3),tri(p(35,y+3),p(38,y+1),p(40,y+6),3),tri(p(38,y+6),p(44,y),p(40,y+7),3)
+ ];})];
 const wires=()=>[...box(13,45,14,7,10,0),...box(42,46,11,6,10,1),...arrow(32,47,11,3),...arrow(62,47,12,4),...fan(81,54,10,2).slice(0,24)];
 const place=(m,s,x,y)=>m.map(({v,k})=>({v:v.map(([a,b])=>[(a-50)*s+x,(b-50)*s+y]),k}));
 const packed=()=>[...board(),...chip(47,51,.54),...box(22,27,37,22,8,0)];
@@ -72,8 +82,8 @@ export const mesh={
  actuator:fan(50,50,33,0),
  layers:[...board(),...chip(47,37,.55),...box(22,25,37,22,5,0)],
  packed:packed(), rule:range(),
- fall:[...shift(sensor(),-6,4),...flame(71,42,.38),tri(p(68,24),p(77,18),p(75,30),3),tri(p(65,28),p(57,23),p(58,36),0)],
- link:wires(), offline:monitor(true), verify:shield(), appendix:[...place(monitor(),.9,50,50),...arrow(67,25,16,3)],
+ fall:[...shift(sensor(),-12,2),...warning()],
+ link:wires(), offline:monitor(true), verify:clipboard(), appendix:[...place(monitor(),.9,50,50),...arrow(67,25,16,3)],
 };
 export const palettes={
  peach:['#f7d5a0','#f3a465','#c85c42','#9b403e','#512e37','#e48b58','#aa4e41','#422c42'],
@@ -90,15 +100,60 @@ export function polygons(name){
  return Array.from({length:pieceCount},(_,i)=>source[i]??{v:[[50+(i%7-3)*2,48+(i%5)],[50+(i%7-3)*2,48+(i%5)],[50+(i%7-3)*2,48+(i%5)]],k:i%8});
 }
 export function exhibit(container){
+ const annotations=makeAnnotations(container);
  const parts=Array.from({length:pieceCount},(_,i)=>{
   const e=document.createElement('span');e.className='shard';e.style.setProperty('--delay',String((i*37)%225)+'ms');return e;
  });
  container.append(...parts);
  return function morph(name,palette){
+  annotations(name);
   const color=palettes[palette];polygons(name).forEach(({v,k},i)=>{
     const node=parts[i];
     node.style.clipPath='polygon('+v.map(([x,y])=>x.toFixed(2)+'% '+y.toFixed(2)+'%').join(',')+')';
     node.style.backgroundColor=color[k%color.length];
   });
+ };
+}
+
+
+const annotationsByForm={
+ cabinet:{caption:'Gabinete de pruebas',lines:[['Módulos en prueba',37,57,13,65],['Rejilla',67,56,88,68]]},
+ heat:{caption:'Gabinete de pruebas',lines:[['Calor de los módulos',47,28,78,15],['Rejilla',68,58,88,70]]},
+ sensor:{caption:'TMP117 · sensor digital',lines:[['Encapsulado',47,42,21,30],['Terminales',56,63,78,72]]},
+ processor:{caption:'ESP32 · procesador',lines:[['Procesador',49,43,22,28],['Pines',56,62,79,78]]},
+ actuator:{caption:'Extractor axial · 12 V',lines:[['Aspas',42,40,18,27],['Eje',50,50,84,54],['Aro',73,67,86,78]]},
+ layers:{caption:'Montaje en capas',lines:[['Tapa',51,29,76,19],['Chip',48,39,20,37],['Placa',53,61,84,72]]},
+ packed:{caption:'Chip instalado en la placa',lines:[['Tapa',58,28,83,21],['Chip',47,51,18,43],['Placa',54,63,85,70]]},
+ rule:{caption:'Banda de histéresis',lines:[['34 °C',36,57,30,70],['38 °C',64,57,70,70],['Conserva la orden',50,46,50,30]]},
+ fall:{caption:'Lectura inválida',lines:[['Sensor',36,49,16,31],['Alarma',73,49,86,68]]},
+ link:{caption:'Lazo local: sensor, control y extracción',lines:[['Sensor',21,53,15,33],['ESP32',49,54,49,75],['Extractor',80,54,85,33]]},
+ offline:{caption:'Monitor web sin datos nuevos',lines:[['Última lectura',41,43,15,15],['Enlace interrumpido',55,35,81,15]]},
+ verify:{caption:'Lista de comprobación',lines:[['Casos de prueba',56,53,85,60]]},
+ appendix:{caption:'Telemetría y modelo térmico',lines:[['Historial',49,49,20,15]]}
+};
+function makeAnnotations(container){
+ const ns='http://www.w3.org/2000/svg', svg=document.createElementNS(ns,'svg');
+ svg.setAttribute('viewBox','0 0 100 100');svg.setAttribute('class','diagram-labels');svg.setAttribute('aria-hidden','true');
+ container.append(svg);
+ let last;
+ return name=>{
+  if(last===name)return;
+  last=name;
+  const {caption,lines}=annotationsByForm[name];
+  const layer=document.createElementNS(ns,'g');
+  const draw=(tag,attrs,value)=>{
+   const node=document.createElementNS(ns,tag);
+   for(const [k,v] of Object.entries(attrs))node.setAttribute(k,v);
+   if(value)node.textContent=value;
+   layer.append(node);
+  };
+  for(const [label,x,y,tx,ty] of lines){
+   const middle=tx===x?x:x+(tx-x)*.56;
+   draw('path',{d:'M '+x+' '+y+' L '+middle+' '+ty+' H '+tx,class:'leader'});
+   draw('circle',{cx:x,cy:y,r:.6,class:'leader-dot'});
+   draw('text',{x:tx,y:ty-2.2,'text-anchor':tx<24?'start':tx>76?'end':'middle',class:'leader-text'},label);
+  }
+  draw('text',{x:50,y:92,'text-anchor':'middle',class:'figure-caption'},caption);
+  svg.replaceChildren(layer);
  };
 }

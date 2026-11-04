@@ -1,5 +1,5 @@
 import {initial,step} from './control.mjs';
-import {exhibit,forms,themes} from './pieces-art.mjs?v=3';
+import {exhibit,forms,themes} from './pieces-art.mjs?v=4';
 export const demos={
  limits:[[34,'34 °C: alcanza el umbral inferior. El extractor se apaga.'],[36,'36 °C: dentro de la banda; conserva APAGADO.'],[38,'38 °C: alcanza el umbral superior. El extractor se enciende.'],[36,'36 °C: el mismo valor, pero ahora conserva ENCENDIDO.'],[34,'Al volver a 34 °C se apaga. La temperatura no es la única entrada: importa la orden anterior.']],
  fault:[[34,'Estado previo: extractor apagado.'],[null,'El sensor deja de responder. La orden segura se activa en esta primera muestra inválida.'],[33,'Muestra válida 1/3. El extractor sigue encendido.'],[null,'Una lectura inválida reinicia el conteo.'],[33,'Muestra válida 1/3.'],[33,'Muestra válida 2/3.'],[33,'Tercera muestra válida: vuelve el control normal. A 33 °C se apaga.']],
